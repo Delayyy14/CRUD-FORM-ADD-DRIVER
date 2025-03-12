@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Driver</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2 class="text-center">Form Tambah Driver</h2>
+        <div class="card p-4 shadow-sm">
+            <form id="driverForm">
+                <div class="mb-3">
+                    <label for="nama" class="form-label">Nama</label>
+                    <input type="text" id="nama" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="no_telepon" class="form-label">No Telepon</label>
+                    <input type="text" id="no_telepon" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="plat" class="form-label">Plat Kendaraan</label>
+                    <input type="text" id="plat" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-info w-100">Tambah Driver</button>
+            </form>
+        </div>
+
+        <h2 class="text-center mt-4">Daftar Driver</h2>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nama</th>
+                        <th>No Telepon</th>
+                        <th>Email</th>
+                        <th>Plat</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="driverList"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editDriverModal" tabindex="-1" aria-labelledby="editDriverModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Driver</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editDriverForm">
+                        <input type="hidden" id="editDriverId">
+                        <div class="mb-3">
+                            <label for="editNama" class="form-label">Nama</label>
+                            <input type="text" id="editNama" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editNoTelepon" class="form-label">No Telepon</label>
+                            <input type="text" id="editNoTelepon" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" id="editEmail" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPlat" class="form-label">Plat Kendaraan</label>
+                            <input type="text" id="editPlat" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Simpan Perubahan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById("driverForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const nama = document.getElementById("nama").value;
+            const no_telepon = document.getElementById("no_telepon").value;
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const plat = document.getElementById("plat").value;
+
+            await fetch("http://localhost:3000/drivers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nama, no_telepon, email, password, plat })
+            });
+
+            loadDrivers();
+            document.getElementById("driverForm").reset();
+        });
+
+        async function loadDrivers() {
+            const response = await fetch("http://localhost:3000/drivers");
+            const data = await response.json();
+            const driverList = document.getElementById("driverList");
+            driverList.innerHTML = "";
+            data.forEach(driver => {
+                driverList.innerHTML += `
+                    <tr>
+                        <td>${driver.nama}</td>
+                        <td>${driver.no_telepon}</td>
+                        <td>${driver.email}</td>
+                        <td>${driver.plat}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="editDriver(${driver.driverid})">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteDriver(${driver.driverid})">Hapus</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        async function editDriver(id) {
+            const response = await fetch(`http://localhost:3000/drivers/${id}`);
+            const driver = await response.json();
+            
+            document.getElementById("editDriverId").value = driver.driverid;
+            document.getElementById("editNama").value = driver.nama;
+            document.getElementById("editNoTelepon").value = driver.no_telepon;
+            document.getElementById("editEmail").value = driver.email;
+            document.getElementById("editPlat").value = driver.plat;
+            
+            new bootstrap.Modal(document.getElementById("editDriverModal")).show();
+        }
+
+        document.getElementById("editDriverForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const id = document.getElementById("editDriverId").value;
+            const nama = document.getElementById("editNama").value;
+            const no_telepon = document.getElementById("editNoTelepon").value;
+            const email = document.getElementById("editEmail").value;
+            const plat = document.getElementById("editPlat").value;
+
+            await fetch(`http://localhost:3000/drivers/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nama, no_telepon, email, plat })
+            });
+
+            loadDrivers();
+            bootstrap.Modal.getInstance(document.getElementById("editDriverModal")).hide();
+        });
+
+        async function deleteDriver(id) {
+            await fetch(`http://localhost:3000/drivers/${id}`, { method: "DELETE" });
+            loadDrivers();
+        }
+
+        loadDrivers();
+    </script>
+</body>
+</html>
